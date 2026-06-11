@@ -42,4 +42,4 @@ jobs:
 
       - name: Run pytest
         working-directory: ./ai-service
-        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+        run: pytest tests/ --cov=app --cov-report=term-missing --cov-fail-under=70
