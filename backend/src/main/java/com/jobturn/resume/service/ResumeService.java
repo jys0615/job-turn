@@ -28,6 +28,7 @@ public class ResumeService {
 
     private final ResumeRepository resumeRepository;
     private final UserRepository userRepository;
+    private final ResumeParseClient resumeParseClient;
 
     @Value("${resume.storage-path:./uploads/resumes}")
     private String storagePath;
@@ -46,10 +47,14 @@ public class ResumeService {
         Path dest = dir.resolve(hash + ".pdf");
         Files.write(dest, bytes);
 
+        // AI 서비스로 PDF 파싱 (실패해도 업로드는 성공)
+        String parsedText = resumeParseClient.parse(bytes, file.getOriginalFilename());
+
         Resume resume = Resume.builder()
                 .user(user)
                 .originalFileName(file.getOriginalFilename())
                 .storedPath(dest.toString())
+                .parsedText(parsedText)
                 .contentHash(hash)
                 .build();
         return ResumeResponse.from(resumeRepository.save(resume));
