@@ -1,0 +1,31 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# Database
+sqlalchemy==2.0.35
+asyncpg==0.29.0
+alembic==1.13.3
+
+# Cache & Queue
+redis==5.1.1
+celery==5.4.0
+
+# Vector DB
+qdrant-client==1.11.3
+
+# LLM
+anthropic==0.34.2
+
+# Crawler
+playwright==1.47.0
+
+# Resume parsing
+pdfplumber==0.11.4
+
+# Kafka
+aiokafka==0.11.0
+
+# Observability
+prometheus-client==0.21.0

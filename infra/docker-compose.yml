@@ -1,0 +1,187 @@
+version: '3.9'
+
+services:
+  # ==============================
+  # Spring Boot 메인 백엔드
+  # ==============================
+  backend:
+    build: ../backend
+    container_name: jobturn-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/jobturn
+      - SPRING_DATASOURCE_USERNAME=jobturn
+      - SPRING_DATASOURCE_PASSWORD=jobturn
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - kafka
+      - redis
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Python FastAPI AI 서비스
+  # ==============================
+  ai-service:
+    build: ../ai-service
+    container_name: jobturn-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://jobturn:jobturn@postgres:5432/jobturn
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - postgres
+      - kafka
+      - redis
+      - qdrant
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Celery Worker (크롤러)
+  # ==============================
+  celery-worker:
+    build: ../ai-service
+    container_name: jobturn-celery
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql://jobturn:jobturn@postgres:5432/jobturn
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - redis
+      - postgres
+      - qdrant
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Celery Beat (스케줄러)
+  # ==============================
+  celery-beat:
+    build: ../ai-service
+    container_name: jobturn-beat
+    command: celery -A app.core.celery_app beat --loglevel=info
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # PostgreSQL
+  # ==============================
+  postgres:
+    image: postgres:16-alpine
+    container_name: jobturn-postgres
+    environment:
+      POSTGRES_DB: jobturn
+      POSTGRES_USER: jobturn
+      POSTGRES_PASSWORD: jobturn
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Redis
+  # ==============================
+  redis:
+    image: redis:7-alpine
+    container_name: jobturn-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Kafka
+  # ==============================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: jobturn-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - jobturn-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: jobturn-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Qdrant (Vector DB)
+  # ==============================
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: jobturn-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Prometheus
+  # ==============================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: jobturn-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - jobturn-net
+
+  # ==============================
+  # Grafana
+  # ==============================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: jobturn-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - jobturn-net
+
+volumes:
+  postgres-data:
+  qdrant-data:
+  grafana-data:
+
+networks:
+  jobturn-net:
+    driver: bridge

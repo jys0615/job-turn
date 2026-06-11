@@ -1,0 +1,52 @@
+# ==============================
+# Spring Boot
+# ==============================
+backend/build/
+backend/.gradle/
+backend/*.jar
+backend/*.war
+backend/out/
+backend/.idea/
+backend/*.iml
+backend/target/
+
+# ==============================
+# Python
+# ==============================
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.venv/
+ai-service/venv/
+ai-service/.env
+ai-service/*.egg-info/
+ai-service/dist/
+ai-service/.pytest_cache/
+ai-service/.coverage
+ai-service/htmlcov/
+*.pyc
+*.pyo
+
+# ==============================
+# Environment
+# ==============================
+.env
+.env.*
+!.env.example
+
+# ==============================
+# IDE
+# ==============================
+.idea/
+.vscode/settings.json
+*.iml
+
+# ==============================
+# OS
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Docker
+# ==============================
+infra/data/
