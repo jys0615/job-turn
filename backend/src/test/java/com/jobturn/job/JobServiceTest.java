@@ -61,12 +61,23 @@ class JobServiceTest {
     }
 
     @Test
-    @DisplayName("공고 검색 성공")
+    @DisplayName("공고 검색 성공 - 키워드만")
     void search_success() {
-        given(jobPostingRepository.search(any(), any(), any(), any()))
+        given(jobPostingRepository.searchByKeyword(any(), any(), any()))
                 .willReturn(new PageImpl<>(List.of()));
 
         var result = jobService.search("백엔드", null, PageRequest.of(0, 10));
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    @DisplayName("공고 검색 성공 - 키워드 없음")
+    void search_noKeyword_success() {
+        given(jobPostingRepository.findActive(any(LocalDate.class), any()))
+                .willReturn(new PageImpl<>(List.of()));
+
+        var result = jobService.search(null, null, PageRequest.of(0, 10));
 
         assertThat(result).isNotNull();
     }
