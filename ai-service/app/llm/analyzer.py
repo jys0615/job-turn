@@ -27,6 +27,12 @@ def analyze_match(resume_text: str, job_description: str, job_requirements: str)
     )
 
     raw = message.content[0].text.strip()
+    # Claude가 ```json ... ``` 블록으로 감쌀 경우 제거
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
     result = json.loads(raw)
 
     return {

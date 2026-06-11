@@ -1,5 +1,6 @@
 package com.jobturn.matching.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -34,9 +35,9 @@ public class AiServiceClient {
     }
 
     public record AnalysisResult(
-            int matchScore,
-            String matchReason,
-            List<String> skillGaps,
-            String resumeSuggestion
+            @JsonProperty("match_score") int matchScore,
+            @JsonProperty("match_reason") String matchReason,
+            @JsonProperty("skill_gaps") List<String> skillGaps,
+            @JsonProperty("resume_suggestion") String resumeSuggestion
     ) {}
 }
